@@ -1,0 +1,64 @@
+---
+title: "Shughni-Roshorvi cluster village map"
+author: "Maksim Melenchenko, HSE"
+date: "last update on `r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, echo=FALSE, include=FALSE, warning=FALSE}
+library(tidyverse)
+library(lingtypology)
+library(RColorBrewer)
+
+lang_colors <- brewer.pal(6, "Set2")
+
+data <- read_delim("villages.csv", delim = ",")
+data$layer <- factor(data$layer, levels=c("Roshorvi", "Bartangi", "Rushani", "Khufi", "Shughni", "Sub-regions"))
+coords <- read_delim("villages_coords.csv", delim = ",")
+
+data <- left_join(data, coords)
+data$text <- gsub("\n", "<br>", data$text)
+
+datapoints <- data %>%
+  filter(type=="point")
+```
+
+## Languages and altitude
+
+```{r, echo=FALSE, warning=FALSE, fig.width = 10}
+map.feature(
+  languages = datapoints$layer,
+  label = datapoints$label,
+  popup = datapoints$text,
+  features = datapoints$layer,
+  latitude = datapoints$lat,
+  longitude = datapoints$lon,
+  width = 6,
+  color = lang_colors,
+  title = "Languages",
+  stroke.features = datapoints$height,
+  stroke.radius = 8,
+  stroke.legend = FALSE,
+  scale.bar = TRUE,
+  scale.bar.position = "bottomright"
+)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, fig.width = 10}
+datapoints |> 
+  filter(type=="point") |>
+  select(c(object_id, label, layer, type, text, lat, lon, height)) |> 
+  DT::datatable(class = 'cell-border stripe', 
+    rownames = FALSE, 
+    filter = 'top', 
+    extensions = 'Buttons',
+    options = list(pageLength = 10, 
+                   autoWidth = TRUE, 
+                   info = FALSE,
+                   dom = 'fBltp',
+                   buttons = list(list(extend = 'collection',
+                                       buttons = c('csv', 'excel', 'pdf'),
+                                       text = '<i class="fas fa-download"></i>')),
+                   paginate = TRUE))
+```
